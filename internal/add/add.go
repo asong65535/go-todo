@@ -2,23 +2,24 @@ package add
 
 import (
 	"encoding/csv"
-	"fmt"
 	"os"
 )
 
 // import "fmt"
 func Add(task string) error {
 
+	// test records
 	records := [][]string{
 		{"ID", "Task", "Created"},
+		{"1", "TEST", "00:00"},
 	}
 
-	cwd, err := os.Getwd()
-	if err != nil {
-		return err
-	}
-
-	fmt.Println(cwd)
+	// prints CWD
+	// cwd, err := os.Getwd()
+	// if err != nil {
+	// 	return err
+	// }
+	// fmt.Println(cwd)
 
 	relativePath := "../../test/todo.csv"
 
