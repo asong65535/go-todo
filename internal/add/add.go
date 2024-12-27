@@ -5,13 +5,36 @@ import (
 	"os"
 )
 
-// import "fmt"
+var ErrNoFirstLine = "First line not found"
+
+/*
+Purpose: Add to todo list (csv file)
+
+	Cases: {
+		- Add to empty list
+		- Add to list that already exists
+	}
+
+	Outline: {
+		- Gets passed a string from CLI
+		- Opens and read file to see if new line exists
+		- Go to end of file
+		- Write new tasks, including ID and Datetime
+		- Write buffer
+		- Close file
+		- Returns errors along the way if exists, otherwise exits with return nil
+	}
+*/
 func Add(task string) error {
 
 	// test records
 	records := [][]string{
 		{"ID", "Task", "Created"},
 		{"1", "TEST", "00:00"},
+	}
+
+	categoryLine := [][]string{
+		{"ID", "Task", "Created"},
 	}
 
 	// prints CWD
@@ -28,23 +51,25 @@ func Add(task string) error {
 		return err
 	}
 
-	w := csv.NewWriter(file)
+	csvWriter := csv.NewWriter(file)
+
+	csvWriter.Write(categoryLine[0])
 
 	for _, record := range records {
-		err := w.Write(record)
+		err := csvWriter.Write(record)
 		if err != nil {
 			return err
 		}
 	}
 
-	w.Flush()
+	csvWriter.Flush()
 
 	err = file.Close()
 	if err != nil {
 		return err
 	}
 
-	err = w.Error()
+	err = csvWriter.Error()
 	if err != nil {
 		return err
 	}
