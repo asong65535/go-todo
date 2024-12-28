@@ -30,7 +30,7 @@ func Add(task string) error {
 
 	categoryLine := []string{"ID", "Description", "CreatedAt", "IsComplete"}
 
-	relativePath := "../../test/todo.csv"
+	relativePath := "./test/todo.csv"
 
 	isFileExists := checkFileExists(relativePath)
 
