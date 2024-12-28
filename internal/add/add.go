@@ -51,6 +51,7 @@ func Add(task string) error {
 			return fileError
 		}
 	}
+	defer file.Close()
 
 	oldList, err := csv.NewReader(file).ReadAll() // initial todo list
 	if err != nil {

@@ -39,6 +39,7 @@ func List(flag bool) error {
 	if fileError != nil {
 		return fileError
 	}
+	defer file.Close()
 
 	csvReader, readError := csv.NewReader(file).ReadAll()
 	if readError != nil {
