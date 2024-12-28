@@ -1,14 +1,16 @@
 package list
 
 import (
-	//"encoding/csv"
 	//"errors"
 	"encoding/csv"
 	"fmt"
+	"log"
 	"os"
 	"strconv"
 	"text/tabwriter"
-	//"github.com/mergestat/timediff"
+	"time"
+
+	"github.com/mergestat/timediff"
 )
 
 /*
@@ -17,29 +19,8 @@ Notes:
 - get flag [-a]
 - loop through csv and parse with fmt.Fprintln
 */
+
 func List() error {
-
-	// demo written with hardcoded values
-
-	/*
-		w := tabwriter.NewWriter(os.Stdout, 0, 4, 4, ' ', tabwriter.Debug)
-
-		// test list
-		fmt.Fprintln(w, "ID\tTask\tCreated")
-		fmt.Fprintln(w, "1\tTidy up my desk\ta minute ago")
-		fmt.Fprintln(w, "3\tChange my keyboard mapping to use escape/control\ta few seconds ago")
-
-		// \n
-		fmt.Fprint(w, "\n")
-
-		// test list -a
-		fmt.Fprintln(w, "ID\tTask\tCreated\tDone")
-		fmt.Fprintln(w, "1\tTidy up my desk\t2 minutes ago\tfalse")
-		fmt.Fprintln(w, "2\tWrite up documentation for new project feature\ta minute ago\ttrue")
-		fmt.Fprintln(w, "3\tChange my keyboard mapping to use escape/control\ta minute ago\tfalse")
-
-		w.Flush()
-	*/
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 4, 4, ' ', 0)
 
@@ -51,7 +32,7 @@ func List() error {
 	//var allFlag bool = false
 	var allFlag bool = true
 
-	file, fileError := os.OpenFile(filepath, openFileFlag, 0644)
+	file, fileError := os.OpenFile(filepath, openFileFlag, 0644) // -rw-r--r--
 	if fileError != nil {
 		return fileError
 	}
@@ -61,16 +42,25 @@ func List() error {
 		return readError
 	}
 
-	if !allFlag {
-		for i, task := range csvReader {
+	categoryRow := "ID\tTask\tCreated"
+	if allFlag {
+		categoryRow = "ID\tTask\tCreated\tDone"
+	}
 
-			fmt.Fprintln(w, taskParser(task, i, allFlag))
-		}
-	} else {
-		for i, task := range csvReader {
+	fmt.Fprintln(w, categoryRow)
 
-			fmt.Fprintln(w, taskParser(task, i, allFlag))
+	for _, task := range csvReader[1:] {
+
+		isComplete, err := strconv.ParseBool(task[3])
+		if err != nil {
+			return nil
 		}
+
+		if isComplete {
+			continue
+		}
+
+		fmt.Fprintln(w, taskParser(task, allFlag))
 	}
 
 	flushError := w.Flush()
@@ -81,59 +71,37 @@ func List() error {
 	return nil
 }
 
-func taskParser(task []string, line int, flag bool) string {
+func taskParser(task []string, allFlag bool) string {
+
 	parsedTask := ""
 
-	b, err := strconv.ParseBool(task[3])
-	if err != nil && line != 0 {
-		fmt.Println(err)
-	}
-
-	if !b {
-		return parsedTask
-	}
-
-	if !flag {
-		if line == 0 {
-			for i, word := range task[:3] {
-				switch i {
-				case 1:
-					parsedTask += "Task\t"
-				case 2:
-					parsedTask += "Created\t"
-				default:
-					parsedTask += word + "\t"
-				}
+	if !allFlag {
+		for i, word := range task[:3] {
+			if i == 2 {
+				parsedTask += TimeParser(task[i])
 			}
-			return parsedTask
-		}
-
-		for _, word := range task[:3] {
 			parsedTask += word + "\t"
 		}
 
 	} else {
-		if line == 0 {
-			for i, word := range task {
-				switch i {
-				case 1:
-					parsedTask += "Task\t"
-				case 2:
-					parsedTask += "Created\t"
-				case 3:
-					parsedTask += "Done"
-				default:
-					parsedTask += word + "\t"
-				}
+		for i, word := range task {
+			if i == 2 {
+				parsedTask += TimeParser(task[i]) + "\t"
+				continue
 			}
-			return parsedTask
-		}
-
-		for _, word := range task {
 			parsedTask += word + "\t"
 		}
-
 	}
 
 	return parsedTask
+}
+
+func TimeParser(taskTime string) string {
+
+	createdTime, err := time.Parse(time.DateTime, taskTime)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return timediff.TimeDiff(createdTime.Local())
 }

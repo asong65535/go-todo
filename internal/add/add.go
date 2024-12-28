@@ -91,7 +91,7 @@ func taskParser(id int, task string) []string {
 
 	parsedString = append(parsedString, strconv.Itoa(id))
 	parsedString = append(parsedString, task)
-	parsedString = append(parsedString, time.Now().Format(time.DateTime))
+	parsedString = append(parsedString, time.Now().UTC().Format(time.DateTime))
 	parsedString = append(parsedString, "false")
 
 	return parsedString
