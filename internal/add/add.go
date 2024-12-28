@@ -2,10 +2,11 @@ package add
 
 import (
 	"encoding/csv"
+	"errors"
 	"os"
+	"strconv"
+	"time"
 )
-
-var ErrNoFirstLine = "First line not found"
 
 /*
 Purpose: Add to todo list (csv file)
@@ -27,47 +28,49 @@ Purpose: Add to todo list (csv file)
 */
 func Add(task string) error {
 
-	// test records
-	records := [][]string{
-		{"ID", "Task", "Created"},
-		{"1", "TEST", "00:00"},
-	}
-
-	categoryLine := [][]string{
-		{"ID", "Task", "Created"},
-	}
-
-	// prints CWD
-	// cwd, err := os.Getwd()
-	// if err != nil {
-	// 	return err
-	// }
-	// fmt.Println(cwd)
+	categoryLine := []string{"ID", "Description", "CreatedAt", "IsComplete"}
 
 	relativePath := "../../test/todo.csv"
 
-	file, err := os.OpenFile(relativePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
-	if err != nil {
-		return err
-	}
+	isFileExists := checkFileExists(relativePath)
 
-	csvWriter := csv.NewWriter(file)
+	var file *os.File
+	var fileError error
 
-	csvWriter.Write(categoryLine[0])
+	openFileFlag := os.O_RDWR
 
-	for _, record := range records {
-		err := csvWriter.Write(record)
-		if err != nil {
-			return err
+	// if csv exists, open it. otherwise create one
+	if isFileExists {
+		file, fileError = os.OpenFile(relativePath, openFileFlag, 0644)
+		if fileError != nil {
+			return fileError
+		}
+	} else {
+		file, fileError = os.Create(relativePath)
+		if fileError != nil {
+			return fileError
 		}
 	}
 
-	csvWriter.Flush()
-
-	err = file.Close()
+	oldList, err := csv.NewReader(file).ReadAll() // initial todo list
 	if err != nil {
 		return err
 	}
+
+	taskID := len(oldList)
+
+	csvWriter := csv.NewWriter(file)
+
+	if !isFileExists {
+		taskID = 1 // manually set since new file would set it to 0
+		csvWriter.Write(categoryLine)
+	}
+
+	parsedTask := taskParser(taskID, task)
+
+	csvWriter.Write(parsedTask)
+
+	csvWriter.Flush()
 
 	err = csvWriter.Error()
 	if err != nil {
@@ -75,4 +78,21 @@ func Add(task string) error {
 	}
 
 	return nil
+}
+
+func checkFileExists(filePath string) bool {
+	_, err := os.Stat(filePath)
+
+	return !errors.Is(err, os.ErrNotExist)
+}
+
+func taskParser(id int, task string) []string {
+	var parsedString []string
+
+	parsedString = append(parsedString, strconv.Itoa(id))
+	parsedString = append(parsedString, task)
+	parsedString = append(parsedString, time.Now().Format(time.DateTime))
+	parsedString = append(parsedString, "false")
+
+	return parsedString
 }
