@@ -5,6 +5,7 @@ package cmd
 
 import (
 	"fmt"
+	"log"
 	"tasks/internal/add"
 
 	"github.com/spf13/cobra"
@@ -24,6 +25,8 @@ to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		var task string
 
+		// args returns words in separate elems in []
+		// this loop concats to a single str [task] which is passed to Add()
 		for i, word := range args {
 			task += word
 			if i == len(args)-1 {
@@ -32,9 +35,10 @@ to quickly create a Cobra application.`,
 			task += " "
 		}
 
+		// Error checking
 		err := add.Add(task)
 		if err != nil {
-			fmt.Printf("ERROR: %q\n", err)
+			log.Fatal("Unable to add to database: ", err)
 		} else {
 			fmt.Printf("Task successfully added!")
 		}

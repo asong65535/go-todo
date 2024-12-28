@@ -13,24 +13,27 @@ import (
 	"github.com/mergestat/timediff"
 )
 
-/*
-Notes:
-- replace commas with "\t"?
-- get flag [-a]
-- loop through csv and parse with fmt.Fprintln
-*/
-
-func List() error {
+// TODO: pass in [-a] flag
+func List(flag bool) error {
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 4, 4, ' ', 0)
 
 	// TODO: change to "./test/todo.csv for prod"
-	filepath := "../../../test/todo.csv"
+	//filepath := "../../../test/todo.csv"
+	filepath := "./test/todo.csv"
 
 	openFileFlag := os.O_RDWR
 
+	// TODO: remove test flags
 	//var allFlag bool = false
-	var allFlag bool = true
+	//var allFlag bool = true
+
+	categoryRow := "ID\tTask\tCreated"
+	underlineRow := "--\t----\t-------"
+	if flag {
+		categoryRow = "ID\tTask\tCreated\tDone"
+		underlineRow = "--\t----\t------\t----"
+	}
 
 	file, fileError := os.OpenFile(filepath, openFileFlag, 0644) // -rw-r--r--
 	if fileError != nil {
@@ -42,13 +45,11 @@ func List() error {
 		return readError
 	}
 
-	categoryRow := "ID\tTask\tCreated"
-	if allFlag {
-		categoryRow = "ID\tTask\tCreated\tDone"
-	}
-
+	// setup table
 	fmt.Fprintln(w, categoryRow)
+	fmt.Fprintln(w, underlineRow)
 
+	// push rest of table to writer
 	for _, task := range csvReader[1:] {
 
 		isComplete, err := strconv.ParseBool(task[3])
@@ -56,13 +57,14 @@ func List() error {
 			return nil
 		}
 
-		if isComplete {
+		if isComplete && !flag {
 			continue
 		}
 
-		fmt.Fprintln(w, taskParser(task, allFlag))
+		fmt.Fprintln(w, taskParser(task, flag))
 	}
 
+	// write to terminal
 	flushError := w.Flush()
 	if flushError != nil {
 		return flushError
@@ -78,7 +80,8 @@ func taskParser(task []string, allFlag bool) string {
 	if !allFlag {
 		for i, word := range task[:3] {
 			if i == 2 {
-				parsedTask += TimeParser(task[i])
+				parsedTask += TimeParser(task[i]) + "\t"
+				continue
 			}
 			parsedTask += word + "\t"
 		}

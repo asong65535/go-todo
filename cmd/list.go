@@ -1,14 +1,17 @@
 /*
 Copyright © 2024 NAME HERE <EMAIL ADDRESS>
-
 */
 package cmd
 
 import (
 	"fmt"
+	"os"
+	"tasks/internal/list"
 
 	"github.com/spf13/cobra"
 )
+
+var listAll bool
 
 // listCmd represents the list command
 var listCmd = &cobra.Command{
@@ -21,7 +24,10 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("list called")
+
+		if err := list.List(listAll); err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		}
 	},
 }
 
@@ -37,4 +43,9 @@ func init() {
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	// listCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+
+	// FLAGS
+
+	listCmd.Flags().BoolVarP(&listAll, "all", "a", false, "list all tasks")
+
 }
